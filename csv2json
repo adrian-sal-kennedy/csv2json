@@ -1,47 +1,56 @@
 #!/usr/bin/env node
-const { once } = require('node:events');
-const fs = require('fs');
+
+const config = {
+    // showNulls: true,
+}
+
+const { once } = require("node:events");
+const fs = require("fs");
 const argv = process.argv.slice(2).flat();
 const fileStream = fs.createReadStream(argv[0]);
-const lineReader = require('readline').createInterface({
+const lineReader = require("readline").createInterface({
     input: fileStream,
-    crlfDelay: Infinity
+    crlfDelay: Infinity,
 });
 
 var lineNum = 0;
 var colsArr = [];
 var jsonArr = [];
 
-lineReader.on('line', (line) => {
+lineReader.on("line", line => {
     if (lineNum == 0) {
-        colsArr = line.split(',');
+        colsArr = line.split(",");
         lineNum++;
         return;
     }
     const obj = {};
-    line.split(',').forEach((v, i) => {
-        if (v.length > 0) { obj[colsArr[i]] = v; }
+    line.split(",").forEach((v, i) => {
+        if (v.length > 0) {
+            obj[colsArr[i]] = v;
+        } else if (config.showNulls) {
+            obj[colsArr[i]] = null;
+        }
     });
-    if (Object.keys(obj).length > 0) { jsonArr.push(obj); }
+    if (Object.keys(obj).length > 0) {
+        jsonArr.push(obj);
+    }
     lineNum++;
 });
 
-(
-    async function () {
-        await once(lineReader, 'close');
-        if (argv[1]) {
-            fs.writeFileSync(argv[1], JSON.stringify(jsonArr, null, 2), err => {
-                if (err) {
-                    console.error(err);
-                }
-            });
-            fs.appendFileSync(argv[1], "\n", err => {
-                if (err) {
-                    console.error(err);
-                }
-            });
-        } else {
-            console.log(JSON.stringify(jsonArr, null, 2));
-        }
+(async function () {
+    await once(lineReader, "close");
+    if (argv[1]) {
+        fs.writeFileSync(argv[1], JSON.stringify(jsonArr, null, 2), err => {
+            if (err) {
+                console.error(err);
+            }
+        });
+        fs.appendFileSync(argv[1], "\n", err => {
+            if (err) {
+                console.error(err);
+            }
+        });
+    } else {
+        console.log(JSON.stringify(jsonArr, null, 2));
     }
-)();
+})();
